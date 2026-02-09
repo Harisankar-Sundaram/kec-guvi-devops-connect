@@ -46,6 +46,8 @@ jobs:
     needs: ci
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Scan all history for secrets
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -54,6 +56,17 @@ jobs:
           
       - name: Dependency Audit
         run: npm audit --audit-level=high || true # Continue even if high vulnerabilities exist, but log them
+
+      - name: Secret Scanning (Gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Node.js Security Scan (NJSSCAN)
+        uses: ajinabraham/njsscan-action@v0.0.3
+        with:
+          args: '.'
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
